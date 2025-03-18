@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login Page</title>
+    <!-- Local Bootstrap CSS -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS for additional styling -->
+    <style>
+        :root {
+            --teal: #17a2b8;
+            --white: #fff;
+            --gray: #f8f9fa;
+            --dark-gray: #6c757d;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            --gradient: linear-gradient(135deg, #17a2b8, #138496);
+        }
+        body {
+            background: var(--gradient);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            box-sizing: border-box;
+        }
+        .login-container {
+            background-color: var(--white);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .login-header h1 {
+            color: var(--teal);
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .login-header p {
+            color: var(--dark-gray);
+            font-size: 0.9rem;
+        }
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 12px 12px 40px; /* Adjusted padding for icon */
+            border: 1px solid #ced4da;
+            width: 100%;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+            font-size: 1rem;
+            background-color: var(--gray);
+        }
+        .form-control:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.2);
+            background-color: var(--white);
+        }
+        .form-group i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dark-gray);
+            font-size: 1.2rem;
+            pointer-events: none; /* Prevent icon from blocking input */
+        }
+        .btn-primary {
+            background-color: var(--white);
+            color: var(--teal);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-primary:hover {
+            background-color: var(--teal);
+            color: var(--white);
+            border: 2px solid var(--white);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary i {
+            font-size: 1.5rem;
+        }
+        .forgot-password {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .forgot-password a {
+            color: var(--teal);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+        .forgot-password a:hover {
+            color: #138496;
+            text-decoration: underline;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+        }
+        /* Responsive Design */
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+            .login-container {
+                padding: 20px;
+            }
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+            .login-header p {
+                font-size: 0.8rem;
+            }
+            .btn-primary {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Login Header -->
+        <div class="login-header">
+            <h1>Login</h1>
+            <p>Welcome back! Please enter your credentials.</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="form-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder="Email" required class="form-control">
+            </div>
+            <div class="form-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Password" required class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <div class="error-message" id="errorMessage"></div>
+        </form>
+
+        <!-- Forgot Password Link -->
+        <div class="forgot-password">
+            <a href="reset-password.html">Forgot Password?</a>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+
+        // Handle Login
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Show loading state
+            const loginButton = document.querySelector('.btn-primary');
+            loginButton.innerHTML = '<i class="fas fa-spinner"></i> Logging in...';
+            loginButton.classList.add('loading');
+
+            // Sign in with Firebase Authentication
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    console.log('Logged in user:', user);
+
+                    // Redirect to dashboard
+                    window.location.href = 'dashboard.html';
+                })
+                .catch((error) => {
+                    // Display error message
+                    document.getElementById('errorMessage').textContent = error.message;
+
+                    // Reset login button
+                    loginButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                    loginButton.classList.remove('loading');
+                });
+        });
+    </script>
+
+    <!-- Local Bootstrap JS -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

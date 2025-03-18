@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --teal: #17a2b8;
+            --white: #fff;
+            --dark-teal: #138496;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            background-color: var(--teal);
+            color: var(--white);
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: var(--white);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            color: #000;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--teal);
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--teal);
+            outline: none;
+            box-shadow: 0 0 5px rgba(23, 162, 184, 0.5);
+        }
+
+        button {
+            background-color: var(--teal);
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--dark-teal);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+
+        .result.green {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .result.orange {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .result.red {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .result h3 {
+            margin-top: 0;
+            color: inherit;
+        }
+
+        .result p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .button-group a {
+            text-decoration: none;
+            color: var(--white);
+            background-color: var(--teal);
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button-group a:hover {
+            background-color: var(--dark-teal);
+        }
+
+        footer {
+            background-color: var(--white);
+            color: var(--teal);
+            text-align: center;
+            padding: 15px 10px;
+            margin-top: auto;
+            box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            input, select, button {
+                font-size: 14px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group a {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Form Container -->
+    <div class="container">
+        <h1>Maintenance Form</h1>
+        <form id="maintenanceForm">
+            <label for="machineId">Machine ID:</label>
+            <select id="machineId" name="machineId" required>
+                <option value="" disabled selected>Select a Machine</option>
+            </select>
+
+            <label for="maintenanceDate">Date of Maintenance:</label>
+            <input type="date" id="maintenanceDate" name="maintenanceDate" required>
+
+            <label for="oilViscosity">Oil Viscosity:</label>
+            <input type="number" id="oilViscosity" name="oilViscosity" required>
+
+            <label for="oilContaminants">Oil Contaminants (ppm):</label>
+            <input type="number" id="oilContaminants" name="oilContaminants" required>
+
+            <label for="oilCondition">Oil Condition:</label>
+            <select id="oilCondition" name="oilCondition" required>
+                <option value="1">Good</option>
+                <option value="0.5">Degraded</option>
+                <option value="0">Contaminated</option>
+            </select>
+
+            <label for="operationalHours">Hours of Operation:</label>
+            <input type="number" id="operationalHours" name="operationalHours" required>
+
+            <label for="errors">Number of Errors:</label>
+            <input type="number" id="errors" name="errors" required>
+
+            <label for="repairTime">Repair Time (hours):</label>
+            <input type="number" id="repairTime" name="repairTime" required>
+
+            <button type="submit">Submit</button>
+        </form>
+
+        <div id="resultsSection" class="result" style="display: none;">
+            <h3>Calculation Results</h3>
+            <p><strong>Oil Health Index:</strong> <span id="oilHealthIndexResult"></span></p>
+            <p><strong>MTBF:</strong> <span id="mtbfResult"></span></p>
+            <p><strong>MTTR:</strong> <span id="mttrResult"></span></p>
+            <p><strong>Error Rate:</strong> <span id="errorRateResult"></span></p>
+        </div>
+
+        <div class="button-group">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="machines.html">Machine Management</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2025 PPMPL. 
+    </footer>
+    <script type="module">
+        import { auth, db, collection, query, where, getDocs, serverTimestamp } from './firebase-config.js';
+
+        const fetchMachines = () => {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    const machinesRef = collection(db, 'machines');
+                    const q = query(machinesRef, where('userId', '==', user.uid));
+                    getDocs(q).then((querySnapshot) => {
+                        const machineIdDropdown = document.getElementById('machineId');
+                        machineIdDropdown.innerHTML = '<option value="" disabled selected>Select a Machine</option>';
+
+                        querySnapshot.forEach((doc) => {
+                            const machine = doc.data();
+                            const option = document.createElement('option');
+                            option.value = machine.machineId; // Assuming 'machineId' is the field in Firestore
+                            option.textContent = machine.model; // Display the machine model in the dropdown
+                            machineIdDropdown.appendChild(option);
+                        });
+                    }).catch((error) => {
+                        console.error('Error fetching machines: ', error);
+                    });
+                } else {
+                    // Redirect to login page if user is not authenticated
+                    window.location.href = 'login.html';
+                }
+            });
+        };
+
+        const handleFormSubmit = () => {
+            document.getElementById('maintenanceForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                // Get user input
+                const machineId = document.getElementById('machineId').value;
+                const maintenanceDate = document.getElementById('maintenanceDate').value;
+                const oilViscosity = parseFloat(document.getElementById('oilViscosity').value);
+                const oilContaminants = parseFloat(document.getElementById('oilContaminants').value);
+                const oilCondition = parseFloat(document.getElementById('oilCondition').value);
+                const operationalHours = parseFloat(document.getElementById('operationalHours').value);
+                const errors = parseFloat(document.getElementById('errors').value);
+                const repairTime = parseFloat(document.getElementById('repairTime').value);
+
+                // Get current user's email
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('User not authenticated. Please log in.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                const userId = user.email;
+
+                // Get current timestamp
+                const timestamp = serverTimestamp();
+
+                // Calculate metrics
+                const viscosityScore = (oilViscosity >= 50 && oilViscosity <= 100) ? 1 : 0;
+                const contaminantScore = (oilContaminants < 100) ? 1 : (oilContaminants < 200 ? 0.5 : 0);
+                const oilHealthIndex = (viscosityScore + contaminantScore + oilCondition) / 3;
+                const mtbf = operationalHours / errors;
+                const mttr = repairTime / errors;
+                const errorRate = errors / operationalHours;
+
+                // Determine result colors
+                const oilHealthIndexColor = oilHealthIndex >= 0.8 ? 'green' : oilHealthIndex >= 0.5 ? 'orange' : 'red';
+                const mtbfColor = mtbf >= 150 ? 'green' : mtbf >= 100 ? 'orange' : 'red';
+                const mttrColor = mttr <= 2 ? 'green' : mttr <= 5 ? 'orange' : 'red';
+                const errorRateColor = errorRate <= 0.01 ? 'green' : errorRate <= 0.05 ? 'orange' : 'red';
+
+                // Display results
+                const resultsSection = document.getElementById('resultsSection');
+                resultsSection.style.display = 'block';
+                resultsSection.className = `result ${oilHealthIndexColor}`; // Use Oil Health Index color for the entire section
+
+                document.getElementById('oilHealthIndexResult').textContent = `${oilHealthIndex.toFixed(2)} (${oilHealthIndexColor.toUpperCase()})`;
+                document.getElementById('mtbfResult').textContent = `${mtbf.toFixed(2)} hours (${mtbfColor.toUpperCase()})`;
+                document.getElementById('mttrResult').textContent = `${mttr.toFixed(2)} hours (${mttrColor.toUpperCase()})`;
+                document.getElementById('errorRateResult').textContent = `${errorRate.toFixed(2)} errors/hour (${errorRateColor.toUpperCase()})`;
+
+                // Save data to Firestore
+                const maintenanceRecordsRef = collection(db, 'maintenanceRecords');
+                addDoc(maintenanceRecordsRef, {
+                    machineId: machineId,
+                    maintenanceDate: maintenanceDate,
+                    oilViscosity: oilViscosity,
+                    oilContaminants: oilContaminants,
+                    oilCondition: oilCondition,
+                    operationalHours: operationalHours,
+                    errors: errors,
+                    repairTime: repairTime,
+                    oilHealthIndex: oilHealthIndex,
+                    mtbf: mtbf,
+                    mttr: mttr,
+                    errorRate: errorRate,
+                    userId: userId, // Save user's email
+                    timestamp: timestamp // Save current timestamp
+                })
+                .then(() => {
+                    alert('Data saved successfully!');
+                    document.getElementById('maintenanceForm').reset(); // Clear the form
+                })
+                .catch((error) => {
+                    console.error('Error saving data: ', error);
+                    alert('Error saving data. Please try again.');
+                });
+            });
+        };
+
+        const handleLogout = () => {
+            const logoutButton = document.getElementById('logoutButton');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    auth.signOut().then(() => {
+                        // Redirect to login page after successful logout
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        console.error('Logout Error:', error);
+                        alert('Error during logout. Please try again.');
+                    });
+                });
+            }
+        };
+
+        // Initialize functions
+        fetchMachines();
+        handleFormSubmit();
+        handleLogout();
+    </script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+    <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

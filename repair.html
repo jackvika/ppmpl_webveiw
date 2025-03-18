@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repair Request</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --teal: #17a2b8;
+            --white: #fff;
+            --dark-teal: #138496;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--teal);
+            margin: 0;
+            padding: 20px;
+            color: var(--white);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            color: #000;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--teal);
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+            color: var(--teal);
+        }
+
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--teal);
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--dark-teal);
+        }
+
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .image-preview img {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 4px;
+            border: 2px solid var(--teal);
+        }
+
+        .machine-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .machine-details p {
+            margin: 5px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Repair Request</h1>
+        <form id="repairForm">
+            <!-- Machine Selection -->
+            <label for="machineId">Select Machine:</label>
+            <select id="machineId" name="machineId" required>
+                <option value="" disabled selected>Select a Machine</option>
+            </select>
+
+            <!-- Machine Details -->
+            <label>Machine Details:</label>
+            <div id="machineDetails" class="machine-details">
+                <!-- Machine details will be displayed here -->
+            </div>
+
+            <!-- Issue Description -->
+            <label for="issueDescription">Issue Description:</label>
+            <textarea id="issueDescription" name="issueDescription" rows="4" required></textarea>
+
+            <!-- Image Upload -->
+            <label for="images">Upload Images:</label>
+            <input type="file" id="images" name="images" multiple accept="image/*">
+            <div class="image-preview" id="imagePreview"></div>
+
+            <!-- Submit Button -->
+            <button type="submit">Submit Repair Request</button>
+        </form>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase services from firebase-config.js
+        import { auth, db, storage, collection, query, where, getDocs, doc, getDoc, addDoc, serverTimestamp, ref, uploadBytes, getDownloadURL } from './firebase-config.js';
+
+        // Fetch machines and populate dropdown
+        const fetchMachines = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const machinesRef = collection(db, 'machines');
+                const q = query(machinesRef, where('userId', '==', user.uid));
+                const querySnapshot = await getDocs(q);
+
+                const machineIdDropdown = document.getElementById('machineId');
+                machineIdDropdown.innerHTML = '<option value="" disabled selected>Select a Machine</option>';
+
+                querySnapshot.forEach((doc) => {
+                    const machine = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id; // Use document ID as value
+                    option.textContent = machine.model; // Display machine model
+                    machineIdDropdown.appendChild(option);
+                });
+
+                // Add event listener to fetch machine details when a machine is selected
+                machineIdDropdown.addEventListener('change', async (e) => {
+                    const machineId = e.target.value;
+                    const machineDoc = await getDoc(doc(db, 'machines', machineId));
+                    if (machineDoc.exists()) {
+                        const machineData = machineDoc.data();
+                        document.getElementById('machineDetails').innerHTML = `
+                            <p><strong>Model:</strong> ${machineData.model}</p>
+                            <p><strong>Location:</strong> ${machineData.location}</p>
+                            <p><strong>Status:</strong> ${machineData.status}</p>
+                        `;
+                    } else {
+                        document.getElementById('machineDetails').innerHTML = '<p>No details found for this machine.</p>';
+                    }
+                });
+            } else {
+                window.location.href = 'login.html'; // Redirect if user is not authenticated
+            }
+        };
+
+        // Handle image uploads
+        const uploadImages = async (files) => {
+            const imageUrls = [];
+            for (const file of files) {
+                const storageRef = ref(storage, `repair-images/${file.name}`);
+                await uploadBytes(storageRef, file); // Upload the file
+                const downloadURL = await getDownloadURL(storageRef); // Get the download URL
+                imageUrls.push(downloadURL); // Add the URL to the array
+            }
+            return imageUrls; // Return the array of image URLs
+        };
+
+        // Handle form submission
+        const handleFormSubmit = () => {
+            document.getElementById('repairForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('User not authenticated. Please log in.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const machineId = document.getElementById('machineId').value;
+                const issueDescription = document.getElementById('issueDescription').value;
+                const images = document.getElementById('images').files;
+
+                // Upload images and get URLs
+                const imageUrls = await uploadImages(images);
+
+                // Save repair request to Firestore
+                const repairRequestsRef = collection(db, 'repairRequests');
+                await addDoc(repairRequestsRef, {
+                    machineId: machineId,
+                    issueDescription: issueDescription,
+                    images: imageUrls,
+                    userId: user.uid,
+                    timestamp: serverTimestamp()
+                });
+
+                alert('Repair request submitted successfully!');
+                document.getElementById('repairForm').reset(); // Reset the form
+                document.getElementById('imagePreview').innerHTML = ''; // Clear image preview
+            });
+        };
+
+        // Initialize functions
+        fetchMachines();
+        handleFormSubmit();
+    </script>
+</body>
+</html>

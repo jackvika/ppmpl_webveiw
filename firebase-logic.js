@@ -1,14 +1,14 @@
 import { auth, db } from './firebase-config.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
 // Check authentication and fetch machines
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         try {
             // Fetch machines for the logged-in user
-            const machinesRef = collection(db, 'machines'); // Ensure 'machines' collection exists
-            const q = query(machinesRef, where('userId', '==', user.uid));
+            const machinesRef = collection(db, 'machines'); // Reference the 'machines' collection
+            const q = query(machinesRef, where('userId', '==', user.email)); // Query machines for the logged-in user
             const querySnapshot = await getDocs(q);
 
             const machineList = document.getElementById('machineList');
@@ -16,9 +16,10 @@ onAuthStateChanged(auth, async (user) => {
 
             querySnapshot.forEach((doc) => {
                 const machine = doc.data();
-                const purchaseDate = machine.purchaseDate.toDate().toLocaleDateString();
-                const lastMaintenanceDate = machine.lastMaintenanceDate.toDate().toLocaleDateString();
+                const purchaseDate = machine.purchaseDate.toDate().toLocaleDateString(); // Convert Firestore Timestamp to readable date
+                const lastMaintenanceDate = machine.lastMaintenanceDate.toDate().toLocaleDateString(); // Convert Firestore Timestamp to readable date
 
+                // Create a machine card and append it to the machine list
                 machineList.innerHTML += `
                     <div class="machine-card">
                         <h3>${machine.model}</h3>

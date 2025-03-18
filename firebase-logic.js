@@ -18,19 +18,23 @@ onAuthStateChanged(auth, async (user) => {
                 const machine = doc.data();
                 console.log('Machine Data:', machine); // Debug: Log the machine data
 
-                // Check if purchaseDate and lastMaintenanceDate exist and are valid
-                const purchaseDate = machine.purchaseDate?.toDate?.()?.toLocaleDateString() || 'N/A';
-                const lastMaintenanceDate = machine.lastMaintenanceDate?.toDate?.()?.toLocaleDateString() || 'N/A';
+                // Extract fields from the machine document
+                const model = machine.model || 'N/A';
+                const serialNumber = machine['Serial Number'] || 'N/A'; // Use bracket notation for fields with spaces
+                const purchaseDate = machine['Purchase Date']?.toDate?.()?.toLocaleDateString() || 'N/A'; // Use bracket notation for fields with spaces
+                const lastMaintenanceDate = machine['Last Maintenance Date']?.toDate?.()?.toLocaleDateString() || 'N/A'; // Use bracket notation for fields with spaces
+                const status = machine.Status || 'N/A'; // Use bracket notation for fields with spaces
+                const imageUrl = machine['Image Url'] || '#'; // Use bracket notation for fields with spaces
 
                 // Create a machine card and append it to the machine list
                 machineList.innerHTML += `
                     <div class="machine-card">
-                        <h3>${machine.model || 'N/A'}</h3>
-                        <p><strong>Serial Number:</strong> ${machine.serialNumber || 'N/A'}</p>
+                        <h3>${model}</h3>
+                        <p><strong>Serial Number:</strong> ${serialNumber}</p>
                         <p><strong>Purchase Date:</strong> ${purchaseDate}</p>
                         <p><strong>Last Maintenance Date:</strong> ${lastMaintenanceDate}</p>
-                        <p><strong>Status:</strong> ${machine.status || 'N/A'}</p>
-                        <img src="${machine.imageUrl || '#'}" alt="${machine.model || 'Machine Image'}" class="machine-image">
+                        <p><strong>Status:</strong> ${status}</p>
+                        <img src="${imageUrl}" alt="${model}" class="machine-image">
                     </div>
                 `;
             });

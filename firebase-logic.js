@@ -16,18 +16,21 @@ onAuthStateChanged(auth, async (user) => {
 
             querySnapshot.forEach((doc) => {
                 const machine = doc.data();
-                const purchaseDate = machine.purchaseDate.toDate().toLocaleDateString(); // Convert Firestore Timestamp to readable date
-                const lastMaintenanceDate = machine.lastMaintenanceDate.toDate().toLocaleDateString(); // Convert Firestore Timestamp to readable date
+                console.log('Machine Data:', machine); // Debug: Log the machine data
+
+                // Check if purchaseDate and lastMaintenanceDate exist and are valid
+                const purchaseDate = machine.purchaseDate?.toDate?.()?.toLocaleDateString() || 'N/A';
+                const lastMaintenanceDate = machine.lastMaintenanceDate?.toDate?.()?.toLocaleDateString() || 'N/A';
 
                 // Create a machine card and append it to the machine list
                 machineList.innerHTML += `
                     <div class="machine-card">
-                        <h3>${machine.model}</h3>
-                        <p><strong>Serial Number:</strong> ${machine.serialNumber}</p>
+                        <h3>${machine.model || 'N/A'}</h3>
+                        <p><strong>Serial Number:</strong> ${machine.serialNumber || 'N/A'}</p>
                         <p><strong>Purchase Date:</strong> ${purchaseDate}</p>
                         <p><strong>Last Maintenance Date:</strong> ${lastMaintenanceDate}</p>
-                        <p><strong>Status:</strong> ${machine.status}</p>
-                        <img src="${machine.imageUrl}" alt="${machine.model}" class="machine-image">
+                        <p><strong>Status:</strong> ${machine.status || 'N/A'}</p>
+                        <img src="${machine.imageUrl || '#'}" alt="${machine.model || 'Machine Image'}" class="machine-image">
                     </div>
                 `;
             });

@@ -7,7 +7,7 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         try {
             // Fetch machines for the logged-in user
-            const machinesRef = collection(db, 'machines');
+            const machinesRef = collection(db, 'machines'); // Ensure 'machines' collection exists
             const q = query(machinesRef, where('userId', '==', user.uid));
             const querySnapshot = await getDocs(q);
 

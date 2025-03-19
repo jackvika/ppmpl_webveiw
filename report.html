@@ -6,6 +6,8 @@
     <title>Machine Maintenance Report</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="bootstrap.min.css">
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Custom CSS -->
     <style>
         :root {
@@ -98,12 +100,56 @@
     <script type="module">
         import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+        import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
-        // Function to download report
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        // Function to download report as PDF
         const downloadReport = (reportId) => {
-            alert(`Downloading report with ID: ${reportId}`);
-            // Add logic to generate and download the report as a PDF or text file
+            // Fetch the report data from Firestore
+            const reportRef = doc(db, 'maintenanceRecords', reportId);
+            getDoc(reportRef).then((docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const report = docSnapshot.data();
+
+                    // Create a new PDF instance
+                    const pdf = new jsPDF();
+
+                    // Add company logo (replace 'logo.png' with the actual path to your logo)
+                    const logo = new Image();
+                    logo.src = 'https://www.panchal-plastic.com/assets/images/Panchal-Logo.webp'; // Path to your company logo
+                    logo.onload = () => {
+                        pdf.addImage(logo, 'PNG', 10, 10, 50, 20); // Adjust position and size as needed
+
+                        // Add report title
+                        pdf.setFontSize(18);
+                        pdf.text("Machine Maintenance Report", 10, 40);
+
+                        // Add report details
+                        pdf.setFontSize(12);
+                        pdf.text(`Machine ID: ${report.machineId}`, 10, 50);
+                        pdf.text(`Maintenance Date: ${report.maintenanceDate}`, 10, 60);
+                        pdf.text(`Oil Health Index: ${report.oilHealthIndex.toFixed(2)}`, 10, 70);
+                        pdf.text(`MTBF: ${report.mtbf.toFixed(2)} hours`, 10, 80);
+                        pdf.text(`MTTR: ${report.mttr.toFixed(2)} hours`, 10, 90);
+                        pdf.text(`Error Rate: ${report.errorRate.toFixed(2)} errors/hour`, 10, 100);
+
+                        // Add disclaimer
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(100); // Gray color for disclaimer
+                        pdf.text("Note: The calculations in this report are based on the inputs provided and may not be entirely accurate.", 10, 120);
+
+                        // Save the PDF
+                        pdf.save(`report_${reportId}.pdf`);
+                    };
+                } else {
+                    alert('Report not found!');
+                }
+            }).catch((error) => {
+                console.error('Error fetching report:', error);
+                alert('An error occurred while fetching the report. Please try again.');
+            });
         };
 
         // Fetch reports for the logged-in user

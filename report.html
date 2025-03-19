@@ -100,6 +100,12 @@
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
+        // Function to download report
+        const downloadReport = (reportId) => {
+            alert(`Downloading report with ID: ${reportId}`);
+            // Add logic to generate and download the report as a PDF or text file
+        };
+
         // Fetch reports for the logged-in user
         const fetchReports = () => {
             onAuthStateChanged(auth, async (user) => {
@@ -123,11 +129,20 @@
                                         <p><strong>MTBF:</strong> ${report.mtbf.toFixed(2)} hours</p>
                                         <p><strong>MTTR:</strong> ${report.mttr.toFixed(2)} hours</p>
                                         <p><strong>Error Rate:</strong> ${report.errorRate.toFixed(2)} errors/hour</p>
-                                        <button class="download-btn" onclick="downloadReport('${doc.id}')">Download Report</button>
+                                        <button class="download-btn" data-report-id="${doc.id}">Download Report</button>
                                     </div>
                                 </div>
                             `;
                             reportsList.insertAdjacentHTML('beforeend', reportCard);
+                        });
+
+                        // Add event listeners to all download buttons
+                        const downloadButtons = document.querySelectorAll('.download-btn');
+                        downloadButtons.forEach((button) => {
+                            button.addEventListener('click', () => {
+                                const reportId = button.getAttribute('data-report-id');
+                                downloadReport(reportId);
+                            });
                         });
                     } catch (error) {
                         console.error('Error fetching reports:', error);
@@ -138,12 +153,6 @@
                     window.location.href = 'login.html';
                 }
             });
-        };
-
-        // Function to download report
-        const downloadReport = (reportId) => {
-            alert(`Downloading report with ID: ${reportId}`);
-            // Add logic to generate and download the report as a PDF or text file
         };
 
         // Initialize function

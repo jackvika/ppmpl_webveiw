@@ -228,134 +228,134 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { auth, db } from './firebase-config.js';
-        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-        import { collection, query, where, getDocs, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+import { collection, query, where, getDocs, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
-        // Fetch machines for the logged-in user
-        const fetchMachines = () => {
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    try {
-                        const machinesRef = collection(db, 'machines');
-                        const q = query(machinesRef, where('userId', '==', user.email)); // Query machines for the logged-in user
-                        const querySnapshot = await getDocs(q);
+// Fetch machines for the logged-in user
+const fetchMachines = () => {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                const machinesRef = collection(db, 'machines');
+                const q = query(machinesRef, where('userId', '==', user.email)); // Query machines for the logged-in user
+                const querySnapshot = await getDocs(q);
 
-                        const machineIdDropdown = document.getElementById('machineId');
-                        machineIdDropdown.innerHTML = '<option value="" disabled selected>Select a Machine</option>';
+                const machineIdDropdown = document.getElementById('machineId');
+                machineIdDropdown.innerHTML = '<option value="" disabled selected>Select a Machine</option>';
 
-                        querySnapshot.forEach((doc) => {
-                            const machine = doc.data();
-                            const option = document.createElement('option');
-                            option.value = doc.id; // Use the document ID as the value
-                            option.textContent = machine.model; // Display the machine model in the dropdown
-                            machineIdDropdown.appendChild(option);
-                        });
-                    } catch (error) {
-                        console.error('Error fetching machines:', error);
-                        alert('An error occurred while fetching machines. Please try again.');
-                    }
-                } else {
-                    // Redirect to login page if user is not authenticated
-                    window.location.href = 'login.html';
-                }
-            });
-        };
-
-        // Handle form submission
-        const handleFormSubmit = () => {
-            document.getElementById('maintenanceForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                // Get user input
-                const machineId = document.getElementById('machineId').value;
-                const maintenanceDate = document.getElementById('maintenanceDate').value;
-                const oilViscosity = parseFloat(document.getElementById('oilViscosity').value);
-                const oilContaminants = parseFloat(document.getElementById('oilContaminants').value);
-                const oilCondition = parseFloat(document.getElementById('oilCondition').value);
-                const operationalHours = parseFloat(document.getElementById('operationalHours').value);
-                const errors = parseFloat(document.getElementById('errors').value);
-                const repairTime = parseFloat(document.getElementById('repairTime').value);
-
-                // Get current user
-                const user = auth.currentUser;
-                if (!user) {
-                    alert('User not authenticated. Please log in.');
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                // Calculate metrics
-                const viscosityScore = (oilViscosity >= 50 && oilViscosity <= 100) ? 1 : 0;
-                const contaminantScore = (oilContaminants < 100) ? 1 : (oilContaminants < 200 ? 0.5 : 0);
-                const oilHealthIndex = (viscosityScore + contaminantScore + oilCondition) / 3;
-                const mtbf = operationalHours / errors;
-                const mttr = repairTime / errors;
-                const errorRate = errors / operationalHours;
-
-                // Determine result colors
-                const oilHealthIndexColor = oilHealthIndex >= 0.8 ? 'green' : oilHealthIndex >= 0.5 ? 'orange' : 'red';
-                const mtbfColor = mtbf >= 150 ? 'green' : mtbf >= 100 ? 'orange' : 'red';
-                const mttrColor = mttr <= 2 ? 'green' : mttr <= 5 ? 'orange' : 'red';
-                const errorRateColor = errorRate <= 0.01 ? 'green' : errorRate <= 0.05 ? 'orange' : 'red';
-
-                // Display results
-                const resultsSection = document.getElementById('resultsSection');
-                resultsSection.style.display = 'block';
-                resultsSection.className = `result ${oilHealthIndexColor}`;
-
-                document.getElementById('oilHealthIndexResult').textContent = `${oilHealthIndex.toFixed(2)} (${oilHealthIndexColor.toUpperCase()})`;
-                document.getElementById('mtbfResult').textContent = `${mtbf.toFixed(2)} hours (${mtbfColor.toUpperCase()})`;
-                document.getElementById('mttrResult').textContent = `${mttr.toFixed(2)} hours (${mttrColor.toUpperCase()})`;
-                document.getElementById('errorRateResult').textContent = `${errorRate.toFixed(2)} errors/hour (${errorRateColor.toUpperCase()})`;
-
-                // Save data to Firestore
-                try {
-                    const maintenanceRecordsRef = collection(db, 'maintenanceRecords');
-                    await addDoc(maintenanceRecordsRef, {
-                        machineId: machineId,
-                        maintenanceDate: maintenanceDate,
-                        oilViscosity: oilViscosity,
-                        oilContaminants: oilContaminants,
-                        oilCondition: oilCondition,
-                        operationalHours: operationalHours,
-                        errors: errors,
-                        repairTime: repairTime,
-                        oilHealthIndex: oilHealthIndex,
-                        mtbf: mtbf,
-                        mttr: mttr,
-                        errorRate: errorRate,
-                        userId: user.email, // Save user's email
-                        timestamp: serverTimestamp() // Save current timestamp
-                    });
-                    alert('Data saved successfully!');
-                    document.getElementById('maintenanceForm').reset(); // Clear the form
-                } catch (error) {
-                    console.error('Error saving data:', error);
-                    alert('Error saving data. Please try again.');
-                }
-            });
-        };
-
-        // Logout functionality
-        const handleLogout = () => {
-            const logoutButton = document.getElementById('logoutButton');
-            if (logoutButton) {
-                logoutButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    signOut(auth).then(() => {
-                        window.location.href = 'login.html';
-                    }).catch((error) => {
-                        console.error('Logout error:', error);
-                        alert('An error occurred during logout. Please try again.');
-                    });
+                querySnapshot.forEach((doc) => {
+                    const machine = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id; // Use the document ID as the value
+                    option.textContent = machine.model; // Display the machine model in the dropdown
+                    machineIdDropdown.appendChild(option);
                 });
+            } catch (error) {
+                console.error('Error fetching machines:', error);
+                alert('An error occurred while fetching machines. Please try again.');
             }
-        };
+        } else {
+            // Redirect to login page if user is not authenticated
+            window.location.href = 'login.html';
+        }
+    });
+};
 
-        // Initialize functions
-        fetchMachines();
-        handleFormSubmit();
-        handleLogout();
+// Handle form submission
+const handleFormSubmit = () => {
+    document.getElementById('maintenanceForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Get user input
+        const machineId = document.getElementById('machineId').value;
+        const maintenanceDate = document.getElementById('maintenanceDate').value;
+        const oilViscosity = parseFloat(document.getElementById('oilViscosity').value);
+        const oilContaminants = parseFloat(document.getElementById('oilContaminants').value);
+        const oilCondition = parseFloat(document.getElementById('oilCondition').value);
+        const operationalHours = parseFloat(document.getElementById('operationalHours').value);
+        const errors = parseFloat(document.getElementById('errors').value);
+        const repairTime = parseFloat(document.getElementById('repairTime').value);
+
+        // Get current user
+        const user = auth.currentUser;
+        if (!user) {
+            alert('User not authenticated. Please log in.');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // Calculate metrics
+        const viscosityScore = (oilViscosity >= 50 && oilViscosity <= 100) ? 1 : 0;
+        const contaminantScore = (oilContaminants < 100) ? 1 : (oilContaminants < 200 ? 0.5 : 0);
+        const oilHealthIndex = (viscosityScore + contaminantScore + oilCondition) / 3;
+        const mtbf = operationalHours / errors;
+        const mttr = repairTime / errors;
+        const errorRate = errors / operationalHours;
+
+        // Determine result colors
+        const oilHealthIndexColor = oilHealthIndex >= 0.8 ? 'green' : oilHealthIndex >= 0.5 ? 'orange' : 'red';
+        const mtbfColor = mtbf >= 150 ? 'green' : mtbf >= 100 ? 'orange' : 'red';
+        const mttrColor = mttr <= 2 ? 'green' : mttr <= 5 ? 'orange' : 'red';
+        const errorRateColor = errorRate <= 0.01 ? 'green' : errorRate <= 0.05 ? 'orange' : 'red';
+
+        // Display results
+        const resultsSection = document.getElementById('resultsSection');
+        resultsSection.style.display = 'block';
+        resultsSection.className = `result ${oilHealthIndexColor}`;
+
+        document.getElementById('oilHealthIndexResult').textContent = `${oilHealthIndex.toFixed(2)} (${oilHealthIndexColor.toUpperCase()})`;
+        document.getElementById('mtbfResult').textContent = `${mtbf.toFixed(2)} hours (${mtbfColor.toUpperCase()})`;
+        document.getElementById('mttrResult').textContent = `${mttr.toFixed(2)} hours (${mttrColor.toUpperCase()})`;
+        document.getElementById('errorRateResult').textContent = `${errorRate.toFixed(2)} errors/hour (${errorRateColor.toUpperCase()})`;
+
+        // Save data to Firestore
+        try {
+            const maintenanceRecordsRef = collection(db, 'maintenanceRecords');
+            await addDoc(maintenanceRecordsRef, {
+                machineId: machineId,
+                maintenanceDate: maintenanceDate,
+                oilViscosity: oilViscosity,
+                oilContaminants: oilContaminants,
+                oilCondition: oilCondition,
+                operationalHours: operationalHours,
+                errors: errors,
+                repairTime: repairTime,
+                oilHealthIndex: oilHealthIndex,
+                mtbf: mtbf,
+                mttr: mttr,
+                errorRate: errorRate,
+                userId: user.email, // Save user's email
+                timestamp: serverTimestamp() // Save current timestamp
+            });
+            alert('Data saved successfully!');
+            document.getElementById('maintenanceForm').reset(); // Clear the form
+        } catch (error) {
+            console.error('Error saving data:', error);
+            alert('Error saving data. Please try again.');
+        }
+    });
+};
+
+// Logout functionality
+const handleLogout = () => {
+    const logoutButton = document.getElementById('logoutButton');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            signOut(auth).then(() => {
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+                alert('An error occurred during logout. Please try again.');
+            });
+        });
+    }
+};
+
+// Initialize functions
+fetchMachines();
+handleFormSubmit();
+handleLogout();
     </script>
 </body>
 </html>
